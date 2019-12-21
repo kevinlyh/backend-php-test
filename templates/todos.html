@@ -3,6 +3,13 @@
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
+    <div class="confirmation">
+        {% if app.session.flashBag is defined %}
+        {%- for confirmMsg in app.session.flashBag.get('confirmMsg') %}
+        <span class="text-success">{{ confirmMsg }}</span>
+        {%- endfor %}
+        {% endif %}
+    </div>
     <table class="table table-striped">
         <th style="width: 10%">#</th>
         <th style="width: 10%">User</th>
