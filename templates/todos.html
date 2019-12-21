@@ -4,7 +4,11 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th style="width: 10%">#</th>
+        <th style="width: 10%">User</th>
+        <th style="width: 50%">Description</th>
+        <th style="width: 15%">Json</th>
+        <th style="width: 15%"></th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -12,6 +16,11 @@
                 <td>
                     <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
                        {{ todo.description }}
+                    </a>
+                </td>
+                <td>
+                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json">
+                        json
                     </a>
                 </td>
                 <td>

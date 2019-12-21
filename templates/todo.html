@@ -3,6 +3,9 @@
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo:</h1>
+    {% if json is defined and json %}
+    {{ todo }}
+    {% else %}
     <table class="table table-striped">
         <th>#</th><th>User</th><th>Description</th><th></th>
         <tr>
@@ -16,6 +19,7 @@
             </td>
         </tr>
     </table>
+    {% endif %}
 </div>
 
 {% endblock %}
