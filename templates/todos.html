@@ -22,9 +22,9 @@
             </tr>
         {% endfor %}
         <tr>
-            <form method="post" action="{{ app.request.baseurl }}/todo/add">
+            <form method="post" action="{{ app.request.baseurl }}/todo/add" onsubmit="return validateForm(this)">
                 <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                    <input id="description" type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
                 </td>
                 <td>
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
@@ -32,5 +32,17 @@
             </form>
         </tr>
     </table>
+    <script>
+      function validateForm(form) {
+        if($('#description').val() == "") {
+          if (!$('#warning-descr').length) {
+            $('#description').after('<span id="warning-descr" class="text-danger">Enter a description</span>');
+          }
+          $('#description').focus();
+          return false;
+        }
+        return true;
+      }
+    </script>
 </div>
 {% endblock %}
