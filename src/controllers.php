@@ -1,7 +1,10 @@
 <?php
 
+use Model\Entities\Todo;
+use Model\Entities\User;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Utils\Helper;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -18,15 +21,16 @@ $app->get('/', function () use ($app) {
 
 
 $app->match('/login', function (Request $request) use ($app) {
-    $username = $request->get('username');
-    $password = $request->get('password');
+    $conditions = [
+        'username' => $request->get('username'),
+        'password' => $request->get('password')
+    ];
 
-    if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+    if ($conditions['username']) {
+        $user = User::first($conditions);
 
         if ($user){
-            $app['session']->set('user', $user);
+            $app['session']->set('user', $user->toArray());
             return $app->redirect('/todo');
         }
     }
@@ -42,20 +46,19 @@ $app->get('/logout', function () use ($app) {
 
 
 $app->get('/todo/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
+    $user = Helper::getSessionUser($app);
+    if (null === $user) {
         return $app->redirect('/login');
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = Todo::find($id);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $todos = Todo::all(['user_id' => $user->id]);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -66,21 +69,20 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
+    $user = Helper::getSessionUser($app);
+    if (null === $user) {
         return $app->redirect('/login');
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = Todo::find($id);
 
         return $app['twig']->render('todo.html', [
             'todo' => json_encode($todo),
             'json' => true,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $todos = Todo::all(['user_id' => $user->id]);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -91,15 +93,15 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
+    $user = Helper::getSessionUser($app);
+    if (null === $user) {
         return $app->redirect('/login');
     }
 
-    $user_id = $user['id'];
-    $description = $request->get('description');
-
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    $todo = new Todo();
+    $todo->setDescription($request->get('description'));
+    $todo->setUserId($user->id);
+    $todo->save();
 
     $app['session']->getFlashBag()->add('confirmMsg', 'Added a task.');
 
@@ -109,8 +111,8 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $todo = Todo::find($id);
+    $todo->delete();
 
     $app['session']->getFlashBag()->add('confirmMsg', 'Deleted a task.');
 
@@ -119,10 +121,15 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
 
 $app->match('/todo/completed/{id}', function ($id, Request $request) use ($app) {
+    $user = Helper::getSessionUser($app);
+    if (null === $user) {
+        return $app->redirect('/login');
+    }
 
     $completed = $request->get('completed') ?? 0;
-    $sql = "UPDATE todos SET completed='$completed' WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $todo = Todo::find($id);
+    $todo->setCompleted($completed);
+    $todo->save();
 
     $app['session']->getFlashBag()->add('confirmMsg', $completed ? 'Completed a task.' : 'Reset a completed task.');
 
