@@ -57,7 +57,48 @@
             </form>
         </tr>
     </table>
-    <script>
+    <div id="pageNav"></div>
+  <script>
+      {% if page is defined %}
+
+      let currentPage = {{ page.pageNumber }};
+      const perPage = {{ page.perPage }};
+      const count = {{ page.count }};
+      document.addEventListener('DOMContentLoaded', (event) => {
+        if (count > perPage) {
+          const todoUrl = `{{ app.request.baseurl }}/todo`;
+          const pageCount = Math.ceil(count / perPage);
+          let pageHtmlContent = `</div><nav class="page-nav">`;
+          pageHtmlContent +=`<ul class="pagination">`;
+            pageHtmlContent += `<li class="page-item">`;
+            if (currentPage > 1) {
+                pageHtmlContent += `<a class="page-link" href="`+todoUrl+`?currentPage=` + (currentPage-1) +`">`;
+            } else {
+                pageHtmlContent += `<a class="page-link disabled" href="#">`;
+            }
+            pageHtmlContent += `<span>&laquo;</span>`;
+            pageHtmlContent += `</a>`;
+            pageHtmlContent += `</li>`;
+          for (let i = 0 ; i < pageCount ; i++) {
+            pageHtmlContent += `<li class="page-item"><a class="page-link" href="`+todoUrl+`?currentPage=` + (i+1) + `">` + (i+1) + `</a></li>`;
+          }
+          pageHtmlContent += `<li class="page-item">`;
+          if (currentPage < pageCount) {
+              pageHtmlContent +=`<a class="page-link" href="`+todoUrl+`?currentPage=` + (currentPage+1) +`">`;
+          } else {
+              pageHtmlContent +=`<a class="page-link disabled" href="#">`;
+          }
+          pageHtmlContent +=`<span aria-hidden="true">&raquo;</span>`;
+          pageHtmlContent +=`</a>`;
+          pageHtmlContent +=`</li>`;
+          pageHtmlContent +=`</ul>`;
+          pageHtmlContent +=`</nav>`;
+          document.getElementById('pageNav').innerHTML = pageHtmlContent;
+        }
+      });
+
+    {% endif %}
+
       function validateForm(form) {
         if($('#description').val() == "") {
           if (!$('#warning-descr').length) {

@@ -3,3 +3,6 @@ database:
     dbname  : ac_todos
     user    : root
     password:
+
+page:
+    perpage : 10

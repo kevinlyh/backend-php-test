@@ -45,7 +45,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     $user = Helper::getSessionUser($app);
     if (null === $user) {
         return $app->redirect('/login');
@@ -58,17 +58,22 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $todos = Todo::all(['user_id' => $user->id]);
+        $currentPage = $request->get('currentPage');
+        $perPage = $request->get('perPage');
+        Helper::restorePage($currentPage, $perPage);
+        $pagination = Todo::paginate(['user_id' => $user->id], $currentPage, $perPage);
+        Helper::rememberPage($pagination['page']);
 
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
+            'todos' => $pagination['data'],
+            'page' => $pagination['page'],
         ]);
     }
 })
 ->value('id', null);
 
 
-$app->get('/todo/{id}/json', function ($id) use ($app) {
+$app->get('/todo/{id}/json', function ($id, Request $request) use ($app) {
     $user = Helper::getSessionUser($app);
     if (null === $user) {
         return $app->redirect('/login');
@@ -82,10 +87,14 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
             'json' => true,
         ]);
     } else {
-        $todos = Todo::all(['user_id' => $user->id]);
+        $currentPage = $request->get('currentPage') ?? 1;
+        $perPage = $request->get('perPage') ?? 10;
+        Helper::restorePage($currentPage, $perPage);
+        $pagination = Todo::paginate(['user_id' => $user->id], $currentPage, $perPage);
+        Helper::rememberPage($pagination['page']);
 
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
+            'todos' => $pagination['data'],
         ]);
     }
 })

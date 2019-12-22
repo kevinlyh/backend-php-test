@@ -120,8 +120,30 @@ abstract class Model{
         return null;
     }
 
+    public function count($conditions='1=1') {
+        $where = $this->formWhereClause($conditions);
+        $sql = "SELECT COUNT(*) as cnt FROM " . $this->_tableName . " WHERE " . " " . $where;
+        $result = $this->_DB->fetchAssoc($sql);
+        return $result['cnt'];
+    }
+
     public static function all($conditions='1=1') {
         return (new static)->fetchAll($conditions);
+    }
+
+    public static function paginate($conditions='1=1', $pageNumber = 1, $perPage = 10) {
+        $count = (new static)->count($conditions);
+        $limit = "ORDER BY id ASC LIMIT " . $perPage . " OFFSET " . ($pageNumber - 1) * $perPage . " ";
+        $data = (new static)->fetchAll($conditions, $limit);
+        $page = array(
+          'count' => $count,
+          'pageNumber' => $pageNumber,
+          'perPage' => $perPage,
+        );
+        return array(
+            'page' => $page,
+            'data' => $data,
+        );
     }
 
     public function save(){
@@ -150,6 +172,10 @@ abstract class Model{
             $sql .= $fields." ) VALUES (".$values.")";
         }
         $this->_DB->executeUpdate($sql);
+        if (!isset($this->_ID)) {
+            $this->_ID = $this->_DB->lastInsertId();
+            $this->setMember($this->pk, $this->_ID);
+        }
     }
 
     public function delete(){
