@@ -178,6 +178,15 @@ abstract class Model{
         }
     }
 
+    public static function create($attributes){
+        $model = new static();
+        foreach ($attributes as $attribute => $value) {
+            $model->setMember($attribute, $value);
+        }
+        $model->save();
+        return $model;
+    }
+
     public function delete(){
         if(isset($this->_ID)){
             $sql = "DELETE FROM ".$this->_tableName." WHERE ".$this->pk." = ".$this->_ID;

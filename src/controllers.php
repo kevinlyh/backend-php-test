@@ -4,7 +4,6 @@ use Model\Entities\Todo;
 use Model\Entities\User;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Utils\Helper;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -46,8 +45,12 @@ $app->get('/logout', function () use ($app) {
 
 
 $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
-    $user = Helper::getSessionUser($app);
+    if (null === $sessionUser = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user = User::find($sessionUser['id']);
     if (null === $user) {
+        $app['session']->set('user', null);
         return $app->redirect('/login');
     }
 
@@ -60,9 +63,23 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     } else {
         $currentPage = $request->get('currentPage');
         $perPage = $request->get('perPage');
-        Helper::restorePage($currentPage, $perPage);
+        $page = $app['session']->get('page');
+        if (!$currentPage) {
+          if ($page) {
+            $currentPage = $page['pageNumber'];
+          } else {
+            $currentPage = 1;
+          }
+        }
+        if (!$perPage) {
+          if ($page) {
+            $perPage = $page['perPage'];
+          } else {
+            $perPage = $app['config']['page']['perpage'];
+          }
+        }
         $pagination = Todo::paginate(['user_id' => $user->id], $currentPage, $perPage);
-        Helper::rememberPage($pagination['page']);
+        $app['session']->set('page', $pagination['page']);
 
         return $app['twig']->render('todos.html', [
             'todos' => $pagination['data'],
@@ -74,8 +91,12 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
 
 
 $app->get('/todo/{id}/json', function ($id, Request $request) use ($app) {
-    $user = Helper::getSessionUser($app);
+    if (null === $sessionUser = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user = User::find($sessionUser['id']);
     if (null === $user) {
+        $app['session']->set('user', null);
         return $app->redirect('/login');
     }
 
@@ -87,30 +108,27 @@ $app->get('/todo/{id}/json', function ($id, Request $request) use ($app) {
             'json' => true,
         ]);
     } else {
-        $currentPage = $request->get('currentPage') ?? 1;
-        $perPage = $request->get('perPage') ?? 10;
-        Helper::restorePage($currentPage, $perPage);
-        $pagination = Todo::paginate(['user_id' => $user->id], $currentPage, $perPage);
-        Helper::rememberPage($pagination['page']);
-
-        return $app['twig']->render('todos.html', [
-            'todos' => $pagination['data'],
-        ]);
+        return $app->redirect('/todo');
     }
 })
 ->value('id', null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
-    $user = Helper::getSessionUser($app);
+    if (null === $sessionUser = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user = User::find($sessionUser['id']);
     if (null === $user) {
+        $app['session']->set('user', null);
         return $app->redirect('/login');
     }
 
-    $todo = new Todo();
-    $todo->setDescription($request->get('description'));
-    $todo->setUserId($user->id);
-    $todo->save();
+    $attributes = array(
+      'description' => $request->get('description'),
+      'userId' => $user->id,
+    );
+    Todo::create($attributes);
 
     $app['session']->getFlashBag()->add('confirmMsg', 'Added a task.');
 
@@ -130,8 +148,12 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
 
 $app->match('/todo/completed/{id}', function ($id, Request $request) use ($app) {
-    $user = Helper::getSessionUser($app);
+    if (null === $sessionUser = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user = User::find($sessionUser['id']);
     if (null === $user) {
+        $app['session']->set('user', null);
         return $app->redirect('/login');
     }
 
