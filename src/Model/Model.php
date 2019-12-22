@@ -133,12 +133,15 @@ abstract class Model{
 
     public static function paginate($conditions='1=1', $pageNumber = 1, $perPage = 10) {
         $count = (new static)->count($conditions);
+        if ($count <= ($pageNumber - 1) * $perPage && $pageNumber > 1) {
+            $pageNumber--;
+        }
         $limit = "ORDER BY id ASC LIMIT " . $perPage . " OFFSET " . ($pageNumber - 1) * $perPage . " ";
         $data = (new static)->fetchAll($conditions, $limit);
         $page = array(
-          'count' => $count,
-          'pageNumber' => $pageNumber,
-          'perPage' => $perPage,
+            'count' => $count,
+            'pageNumber' => $pageNumber,
+            'perPage' => $perPage,
         );
         return array(
             'page' => $page,
