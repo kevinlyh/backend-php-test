@@ -15,7 +15,8 @@
         <th style="width: 10%">User</th>
         <th style="width: 50%">Description</th>
         <th style="width: 15%">Json</th>
-        <th style="width: 15%"></th>
+        <th style="width: 10%">Completed</th>
+        <th style="width: 5%"></th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -31,6 +32,14 @@
                     </a>
                 </td>
                 <td>
+                    <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}">
+                        <div class="completed">
+                            <input type="checkbox" {{ todo.completed ? 'checked' : ''}} value="false" onclick="onClickCompleted(this, {{ todo.id }})">
+                            <input id="completed" name="completed" type="hidden">
+                        </div>
+                    </form>
+                </td>
+                <td>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
@@ -39,8 +48,8 @@
         {% endfor %}
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add" onsubmit="return validateForm(this)">
-                <td colspan="3">
-                    <input id="description" type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                <td colspan="5">
+                    <input id="description" type="textbox" name="description" class="small-6 small-center" style="width: 100%" placeholder="Description...">
                 </td>
                 <td>
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
@@ -58,6 +67,11 @@
           return false;
         }
         return true;
+      }
+
+      function onClickCompleted(checkbox, id) {
+          $(checkbox.form).find('#completed').attr('value', $(checkbox).is(':checked') ? '1' : '0');
+          checkbox.form.submit();
       }
     </script>
 </div>

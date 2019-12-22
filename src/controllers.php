@@ -116,3 +116,15 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+
+$app->match('/todo/completed/{id}', function ($id, Request $request) use ($app) {
+
+    $completed = $request->get('completed') ?? 0;
+    $sql = "UPDATE todos SET completed='$completed' WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    $app['session']->getFlashBag()->add('confirmMsg', $completed ? 'Completed a task.' : 'Reset a completed task.');
+
+    return $app->redirect('/todo');
+});

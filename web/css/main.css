@@ -10,3 +10,7 @@ body {
     margin: 1rem;
     text-align: center;
 }
+
+div.completed {
+  text-align: center;
+}

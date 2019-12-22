@@ -1,0 +1,1 @@
+ ALTER TABLE `todos` ADD `completed` BOOLEAN NOT NUll DEFAULT '0'   AFTER `description`;
