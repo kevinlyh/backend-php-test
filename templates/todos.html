@@ -5,8 +5,8 @@
     <h1>Todo List:</h1>
     <div class="confirmation">
         {% if app.session.flashBag is defined %}
-        {%- for confirmMsg in app.session.flashBag.get('confirmMsg') %}
-        <span class="text-success">{{ confirmMsg }}</span>
+        {%- for msg in app.session.flashBag.get('msg') %}
+        <span class="text-success">{{ msg }}</span>
         {%- endfor %}
         {% endif %}
     </div>

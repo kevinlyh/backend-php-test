@@ -130,18 +130,29 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     );
     Todo::create($attributes);
 
-    $app['session']->getFlashBag()->add('confirmMsg', 'Added a task.');
+    $app['session']->getFlashBag()->add('msg', 'Added a task.');
 
     return $app->redirect('/todo');
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
-
+    if (null === $sessionUser = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user = User::find($sessionUser['id']);
+    if (null === $user) {
+        $app['session']->set('user', null);
+        return $app->redirect('/login');
+    }
     $todo = Todo::find($id);
+    if ($todo->userId != $user->id) {
+      $app['session']->getFlashBag()->add('msg', 'You are not the owner.');
+      return $app->redirect('/todo');
+    }
     $todo->delete();
 
-    $app['session']->getFlashBag()->add('confirmMsg', 'Deleted a task.');
+    $app['session']->getFlashBag()->add('msg', 'Deleted a task.');
 
     return $app->redirect('/todo');
 });
@@ -162,7 +173,7 @@ $app->match('/todo/completed/{id}', function ($id, Request $request) use ($app) 
     $todo->setCompleted($completed);
     $todo->save();
 
-    $app['session']->getFlashBag()->add('confirmMsg', $completed ? 'Completed a task.' : 'Reset a completed task.');
+    $app['session']->getFlashBag()->add('msg', $completed ? 'Completed a task.' : 'Reset a completed task.');
 
     return $app->redirect('/todo');
 });
